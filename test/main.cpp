@@ -1,5 +1,6 @@
 #include<openssl/sha.h>
 #include<string>
+#include<math.h>
 #include<iostream>
 
 #include "../src/merkletree.h"
@@ -7,6 +8,28 @@
 #include "../util/coding.h"
 
 using namespace std;
+
+/**
+ * @brief 估计bloom filter需要的hash函数个数
+ * 
+ * @param m bitset 的大小
+ * @param n key 的个数
+ * @return int 
+ */
+int EstimateHashFunNum(int m, int n) {
+    return (int)ceil(log(2) * (double)m / (double)(n));
+}
+
+/**
+ * @brief 估计bloom filter的 bitset 大小
+ * 
+ * @param n key 的个数
+ * @param p 误判率
+ * @return int 
+ */
+int EstimateBitSetSize(int n, double p) {
+    return (int)ceil(-1 * (double)n * log(p) / pow(log(2), 2));
+}
 
 int main() {
     string tmp;
@@ -41,5 +64,11 @@ int main() {
     string hash1_2 = SHA256(tmp);
     printf("\n%s\n", HashToHexStr(hash1_2).c_str());
 
+    int n = 10000;
+    double p = 0.01;
+    int m = EstimateBitSetSize(n, p);
+    int k = EstimateHashFunNum(m, n);
+    printf("m:%d, k:%d\n", m, k);
+    
     return 0;
 }
