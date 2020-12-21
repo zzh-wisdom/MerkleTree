@@ -11,7 +11,7 @@ all: mt_unit_test bf_unit_test
 
 run: mt_unit_test_run bf_unit_test_run
 
-LIB_SOURCES1 := ./test/merkle_tree_unit_test.cpp ./src/merkle_tree.cpp ./util/hash.cpp ./util/coding.cpp
+LIB_SOURCES1 := ./test/merkle_tree_unit_test.cpp ./src/merkle_tree.cpp ./util/hash.cpp ./util/coding.cpp ./util/bloom_filter.cpp
 mt_unit_test: $(DIR_BIN)
 	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES1) $(CXXFLAGS)
 
@@ -25,9 +25,16 @@ bf_unit_test: $(DIR_BIN)
 bf_unit_test_run:
 	./$(DIR_BIN)/bf_unit_test
 
-LIB_SOURCES3 := ./test/main.cpp ./util/hash.cpp ./util/coding.cpp
-main: $(DIR_BIN)
+LIB_SOURCES3 := ./test/mt_and_bf_test.cpp ./src/merkle_tree.cpp ./util/bloom_filter.cpp ./util/coding.cpp  ./util/hash.cpp 
+mt_and_bf_test: $(DIR_BIN)
 	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES3) $(CXXFLAGS)
+
+mt_and_bf_test_run:
+	./$(DIR_BIN)/mt_and_bf_test
+
+LIB_SOURCES4 := ./test/main.cpp ./util/hash.cpp ./util/coding.cpp
+main: $(DIR_BIN)
+	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES4) $(CXXFLAGS)
 
 main_run:
 	./$(DIR_BIN)/main

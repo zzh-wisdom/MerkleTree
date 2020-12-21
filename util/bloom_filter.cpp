@@ -27,10 +27,12 @@ int EstimateBitSetSize(int n, double p) {
 BloomFilter::BloomFilter(int n, double p) {
     m_ = EstimateBitSetSize(n, p);
     k_ = EstimateHashFunNum(m_, n);
-    int bits = k_;
+    int bits = m_;
     if (bits < 64) bits = 64;
     int bytes = (bits + 7) / 8;  // 向上取整到字节
+    // printf("bytes:%d\n", bytes);
     bitset_.resize(bytes);
+    // printf("m_:%d, k_:%d, bitset bytes:%lu\n", m_, k_, bitset_.size());
 }
 
 void BloomFilter::AddKey(const string& keys) {

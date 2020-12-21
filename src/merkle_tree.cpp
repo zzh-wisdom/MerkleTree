@@ -3,6 +3,22 @@
 #include"../util/hash.h"
 #include"../util/coding.h"
 
+double BLOOM_FILTER_P = 0.01;
+
+void Node::buildBF() {
+    if(is_dup_) {
+        bf_ = nullptr;
+        return;
+    }
+    assert(!is_leaf_);
+    int n = right_idx_ - left_idx_ + 1;
+    double p = tree_->p_;
+    bf_ = new BloomFilter(n, p);
+    for(int i=left_idx_; i<=right_idx_; i++) {
+        bf_->AddKey(tree_->leafs_[i]->content_->CalculateHash());
+    }
+}
+
 string Node::VerifyNode(vector<Content*>* damaged_contents) {
     string tmp_hash;
     if(this->is_leaf_) {
@@ -39,6 +55,39 @@ string Node::CalculateNodeHash() {
     return this->tree_->hash_fun_(combo_hash);
 }
 
+Node* Node::FindLeafMayUsingBF(Content *content, int min_depth_for_bf) {
+    if(is_dup_) {  // 如果是复制的节点，则不用查找
+        return nullptr;
+    }
+    if(depth_<min_depth_for_bf) {  // 小于，直接循环查找
+        for(int i=left_idx_; i<=right_idx_; i++) {
+            if(tree_->leafs_[i]->content_->EqualsByHashAndNum(content)) {
+                return tree_->leafs_[i];
+            }
+        }
+        return nullptr;
+    }
+    else { // 使用bloom filter
+        if(!bf_->KeyMayMatch(content->CalculateHash())) { // 不存在
+            return nullptr;
+        }
+        else {  // 可能存在
+            Node* left = left_->FindLeafMayUsingBF(content, min_depth_for_bf);
+            Node* right = right_->FindLeafMayUsingBF(content, min_depth_for_bf);
+            if(left) {
+                assert(right == nullptr);
+                // if(right != nullptr) {
+                //     printf("left num:%d, right num:%d", left->content_->GetNum(), right->content_->GetNum());
+                // }
+                return left;
+            }
+            else {
+                return right;
+            }
+        }
+    }
+}
+
 void Node::DebugString(int depth, string& out) {
     for(int i=0; i<depth; i++) {
         out += "  ";
@@ -52,14 +101,27 @@ void Node::DebugString(int depth, string& out) {
     }
 }
 
-MerkleTree::MerkleTree(vector<Content*> contents):hash_fun_(SHA256) {
+MerkleTree::MerkleTree(vector<Content*> contents, bool enable_bf):
+    hash_fun_(SHA256), enable_bf_(enable_bf), p_(BLOOM_FILTER_P) {
     this->root_ = buildWithcontents(this, contents, leafs_);
     this->root_hash_ = this->root_->hash_;
+
+    // printf("root_->right_idx_:%d, leafs_ size:%lu\n", root_->right_idx_, leafs_.size());
+    assert(!root_->is_dup_);
+    assert(root_->left_idx_ == 0);
+    assert(root_->right_idx_ == leafs_.size()-1);
+    printf("root depth:%d, keys num:%lu, root bf bitset(bytes):%d\n", 
+        root_->depth_, leafs_.size(), root_->bf_->GetBitsetLen());
 }
 
-MerkleTree::MerkleTree(vector<Content*> contents, HashFun hash_fun):hash_fun_(hash_fun) {
+MerkleTree::MerkleTree(vector<Content*> contents, HashFun hash_fun, bool enable_bf):
+    hash_fun_(hash_fun), enable_bf_(enable_bf), p_(BLOOM_FILTER_P) {
     this->root_ = buildWithcontents(this, contents, leafs_);
     this->root_hash_ = this->root_->hash_;
+
+    assert(!root_->is_dup_);
+    assert(root_->left_idx_ == 0);
+    assert(root_->right_idx_ == leafs_.size()-1);
 }
 
 MerkleTree::~MerkleTree() {
@@ -71,12 +133,12 @@ MerkleTree::~MerkleTree() {
 Node* MerkleTree::buildWithcontents(MerkleTree* tree, vector<Content*> contents, vector<Node*>& leafs) {
     Node* tmp;
     for(int i = 0; i < contents.size(); i++) {
-        tmp = new Node(tree, contents[i], false);
+        tmp = new Node(tree, contents[i], i, false);
         leafs.push_back(tmp);
     }
     // 单数个数据元素，最后一个需要重复
     if(contents.size()%2 == 1) {
-        tmp = new Node(tree, contents[contents.size() - 1], true);
+        tmp = new Node(tree, contents[contents.size() - 1], contents.size(), true);
         leafs.push_back(tmp);
     }
 
@@ -116,39 +178,55 @@ bool MerkleTree::TreeProof(vector<Content*>* damaged_contents) {
     return calculated_root_hash == this->root_hash_;
 }
 
-bool MerkleTree::ContentProof(Content *content) {
-    for(int i = 0; i < this->leafs_.size(); i++) {
-        if(this->leafs_[i]->content_->GetNum() == content->GetNum()) {
-            Node* child = this->leafs_[i];
-            Node* current_parent = this->leafs_[i]->parent_;
-            string root_hash = this->leafs_[i]->CalculateNodeHash();
-            // printf("%s\n", HashToHexStr(root_hash).c_str());
-            string combo_hash;
-            while(current_parent != nullptr) {
-                if(current_parent->left_ == child) {
-                    combo_hash = root_hash + current_parent->right_->hash_;
-                }
-                else {
-                    combo_hash = current_parent->left_->hash_ + root_hash;
-                }
-                root_hash = this->hash_fun_(combo_hash);
-                // printf("%s\n", HashToHexStr(root_hash).c_str());
-                child = current_parent;
-                current_parent = current_parent->parent_;
-            }
-            // 只比较最终的root hash是否相等
-            if(root_hash == this->GetRootHash()) {
-                return true;
-            } else {
-                return false;
-            }
-        }
+// min_depth_for_bf 表示树的深度大于等于该值时，才使用bf辅助搜索
+Node* MerkleTree::findLeaf(Content *content, int min_depth_for_bf) {
+    if(!enable_bf_) {
+        min_depth_for_bf = root_->depth_+1; // 以强制使用线性查找
     }
+    else if(min_depth_for_bf <= 1) { // 叶子节点无法使用bf
+        min_depth_for_bf = 2; 
+    }
+    return root_->FindLeafMayUsingBF(content, min_depth_for_bf);
+}
+
+bool MerkleTree::ContentProof(Content *content, int min_depth_for_bf) {
+    Node* child = findLeaf(content, min_depth_for_bf);
+    if(child == nullptr) {
+        return false;
+    }
+    // printf("num: %d", child->content_->GetNum());
+    Node* current_parent = child->parent_;
+    string root_hash = child->CalculateNodeHash();
+    // printf("%s\n", HashToHexStr(root_hash).c_str());
+    string combo_hash;
+    while(current_parent != nullptr) {
+        if(current_parent->left_ == child) {
+            combo_hash = root_hash + current_parent->right_->hash_;
+        }
+        else {
+            combo_hash = current_parent->left_->hash_ + root_hash;
+        }
+        root_hash = this->hash_fun_(combo_hash);
+        // printf("%s\n", HashToHexStr(root_hash).c_str());
+        child = current_parent;
+        current_parent = current_parent->parent_;
+    }
+    // 只比较最终的root hash是否相等
+    if(root_hash == this->GetRootHash()) {
+        return true;
+    } else {
+        return false;
+    }
+
     return false;
 }
 
 string MerkleTree::GetRootHash() {
     return root_hash_;
+}
+
+int MerkleTree::GetRootDepth() {
+    return root_->depth_;
 }
 
 string MerkleTree::DebugString() {

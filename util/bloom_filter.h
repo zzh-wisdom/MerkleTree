@@ -32,14 +32,13 @@ public:
     bool KeyMayMatch(const string& key);
 
     /**
-     * @brief 将另外一个BloomFilter合并到自身
+     * @brief 获取bitset的长度，单位为byte
      * 
-     * @pre
-     * 
-     * 
-     * @param bf 
+     * @return int 
      */
-    void Merge(BloomFilter *bf);
+    int GetBitsetLen() {
+      return bitset_.size();
+    }
 private:
     int k_; /// hash函数个数
     int m_; /// bitset长度

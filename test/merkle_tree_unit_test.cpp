@@ -165,7 +165,7 @@ bool TestNewMerkleTreeWithDefaultHash() {
     if(is_ok) {
         vector<Content*> v0 = BuildSHA256Contents(Contents0, 3);
         string expected_hash = CalculateRootHash(v0, SHA256);
-        tree = new MerkleTree(v0);
+        tree = new MerkleTree(v0, false);
         // printf("%s\n", tree->DebugString().data());
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
@@ -176,7 +176,7 @@ bool TestNewMerkleTreeWithDefaultHash() {
     if(is_ok) {
         vector<Content*> v1 = BuildSHA256Contents(Contents1, 4);
         string expected_hash = CalculateRootHash(v1, SHA256);
-        tree = new MerkleTree(v1);
+        tree = new MerkleTree(v1, false);
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
             printf("Contents1 --- fail.\n");
@@ -186,7 +186,7 @@ bool TestNewMerkleTreeWithDefaultHash() {
     if(is_ok) {
         vector<Content*> v2 = BuildSHA256Contents(Contents2, 5);
         string expected_hash = CalculateRootHash(v2, SHA256);
-        tree = new MerkleTree(v2);
+        tree = new MerkleTree(v2, false);
         // printf("%s\n", tree->DebugString().data());
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
@@ -212,7 +212,7 @@ bool TestNewMerkleTreeWithSpecifiedHash() {
     if(is_ok) {
         vector<Content*> v0 = BuildSHA256Contents(Contents0, 3);
         string expected_hash = CalculateRootHash(v0, HashWithSeed0);
-        tree = new MerkleTree(v0, HashWithSeed0);
+        tree = new MerkleTree(v0, HashWithSeed0, false);
         // printf("%s\n", tree->DebugString().data());
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
@@ -223,7 +223,7 @@ bool TestNewMerkleTreeWithSpecifiedHash() {
     if(is_ok) {
         vector<Content*> v1 = BuildSHA256Contents(Contents1, 4);
         string expected_hash = CalculateRootHash(v1, HashWithSeed0);
-        tree = new MerkleTree(v1, HashWithSeed0);
+        tree = new MerkleTree(v1, HashWithSeed0, false);
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
             printf("Contents1 --- fail.\n");
@@ -233,7 +233,7 @@ bool TestNewMerkleTreeWithSpecifiedHash() {
     if(is_ok) {
         vector<Content*> v2 = BuildSHA256Contents(Contents2, 5);
         string expected_hash = CalculateRootHash(v2, HashWithSeed0);
-        tree = new MerkleTree(v2, HashWithSeed0);
+        tree = new MerkleTree(v2, HashWithSeed0, false);
         if(expected_hash != tree->GetRootHash()) {
             is_ok = false;
             printf("Contents2 --- fail.\n");
@@ -259,7 +259,7 @@ bool TestTreeProof() {
     vector<Content*> v;
 
     v = BuildSHA256Contents(Contents0, 3);
-    tree = new MerkleTree(v);
+    tree = new MerkleTree(v, false);
     content_tmp = static_cast<SHA256Content*>(v.back());
     if(!(tree->TreeProof(&error_contents) && error_contents.size() == 0)) {
         printf("Contents0 TreeProof step1 fail.\n");
@@ -275,7 +275,7 @@ bool TestTreeProof() {
     delete tree;
 
     v = BuildSHA256Contents(Contents1, 4);
-    tree = new MerkleTree(v);
+    tree = new MerkleTree(v, false);
     content_tmp = static_cast<SHA256Content*>(v.back());
     error_contents.clear();
     if(!(tree->TreeProof(&error_contents) && error_contents.size() == 0)) {
@@ -292,7 +292,7 @@ bool TestTreeProof() {
     delete tree;
 
     v = BuildSHA256Contents(Contents2, 5);
-    tree = new MerkleTree(v);
+    tree = new MerkleTree(v, false);
     content_tmp = static_cast<SHA256Content*>(v.back());
     error_contents.clear();
     if(!(tree->TreeProof(&error_contents) && error_contents.size() == 0)) {
@@ -320,12 +320,12 @@ Fail:
 bool TestContentProof() {
     printf("TestContentProof..\n");
     vector<Content*> v = BuildSHA256Contents(Contents2, 5);
-    MerkleTree* tree = new MerkleTree(v);
+    MerkleTree* tree = new MerkleTree(v, false);
     // printf("%s\n", tree->DebugString().c_str());
     bool is_proof;
     bool is_ok = true;
     for(int i = 0; i < v.size(); i++) {
-        is_proof = tree->ContentProof(v[i]);
+        is_proof = tree->ContentProof(v[i], 0);
         if(!is_proof) {
             printf("ContentProof, step1 num:%u fail.\n", i);
             is_ok = false;
@@ -337,7 +337,7 @@ bool TestContentProof() {
         for(int i=0; i<v.size(); i++) {
             tmp = static_cast<SHA256Content*>(v[i]);
             tmp->data_[0] += 1;
-            is_proof = tree->ContentProof(tmp);
+            is_proof = tree->ContentProof(tmp, 0);
             if(is_proof) {
                 printf("ContentProof, step2 num:%u fail.\n", i);
                 is_ok = false;
