@@ -5,7 +5,11 @@ LIBS := -L/usr/local/opt/openssl@1.1/lib
 
 DIR_BIN := bin
 DIRS := $(DIR_BIN)
-.PHONY: unit_test unit_test_run main main_run
+.PHONY: all run unit_test unit_test_run main main_run
+
+all: mt_unit_test bf_unit_test
+
+run: mt_unit_test_run bf_unit_test_run
 
 LIB_SOURCES1 := ./test/merkle_tree_unit_test.cpp ./src/merkle_tree.cpp ./util/hash.cpp ./util/coding.cpp
 mt_unit_test: $(DIR_BIN)

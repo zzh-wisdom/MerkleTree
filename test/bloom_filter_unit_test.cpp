@@ -6,6 +6,7 @@
 using namespace std;
 
 bool TestBloomFilter() {
+    printf("TestBloomFilter..\n");
     int n = 10000;
     double p = 0.01;
     BloomFilter bf(n, p);
@@ -20,6 +21,7 @@ bool TestBloomFilter() {
         key_tmp = tmp + tmp + tmp;
         assert(bf.KeyMayMatch(key_tmp));
     }
+    printf("=== ok.\n");
     return true;
 }
 
