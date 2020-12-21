@@ -1,5 +1,5 @@
 #include <assert.h>
-#include"merkletree.h"
+#include"merkle_tree.h"
 #include"../util/hash.h"
 #include"../util/coding.h"
 

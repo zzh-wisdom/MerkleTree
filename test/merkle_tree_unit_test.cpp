@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #include "contents.h"
-#include "../src/merkletree.h"
+#include "../src/merkle_tree.h"
 #include "../util/hash.h"
 #include "../util/coding.h"
 

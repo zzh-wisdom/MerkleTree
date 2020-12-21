@@ -1,33 +1,35 @@
-CC := gcc -std=c11
 CXX := g++ -std=c++11
-CXXFLAGS := -lssl
+CXXFLAGS := -lssl -lcrypto
+INCLUDES :=-I/usr/local/opt/openssl@1.1/include
+LIBS := -L/usr/local/opt/openssl@1.1/lib
 
 DIR_BIN := bin
+DIRS := $(DIR_BIN)
+.PHONY: unit_test unit_test_run main main_run
 
-SRCS := $(wildcard *.c)
-DEPS := $(SRCS:.c=.d) 
+LIB_SOURCES1 := ./test/merkle_tree_unit_test.cpp ./src/merkle_tree.cpp ./util/hash.cpp ./util/coding.cpp
+mt_unit_test: $(DIR_BIN)
+	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES1) $(CXXFLAGS)
 
-# 可以换成其他程序
-sign: sign.o
-	$(CC) $(CFLAGS) -o $(DIR_BIN)/$@ $^
+mt_unit_test_run:
+	./$(DIR_BIN)/mt_unit_test
 
-# 模式规则，产生.o文件
-%.o : %.c
-	$(CC) $(CFLAGS) -o $@ -c $(filter %.c, $^)
+LIB_SOURCES2 := ./test/bloom_filter_unit_test.cpp ./util/bloom_filter.cpp ./util/hash.cpp
+bf_unit_test: $(DIR_BIN)
+	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES2) $(CXXFLAGS)
 
-include $(DEPS)
+bf_unit_test_run:
+	./$(DIR_BIN)/bf_unit_test
 
-# 模式规则，产生.d文件
-%.d : %.c
-	@set -e;\
-	$(CC) -MM $(CFLAGS) $(filter %.c,$^) | sed 's,\(.*\)\.o[ :]*,\1.o $@: ,g' > $@
+LIB_SOURCES3 := ./test/main.cpp ./util/hash.cpp ./util/coding.cpp
+main: $(DIR_BIN)
+	$(CXX) $(INCLUDES) $(LIBS) -o $(DIR_BIN)/$@ $(LIB_SOURCES3) $(CXXFLAGS)
 
-format:
-	@#for f in $(shell find . -name '*.c' -or -name '*.cpp' -or -name '*.h' -type f); do astyle $$f; done
-	astyle --recursive *.h,*.c,*.cpp
+main_run:
+	./$(DIR_BIN)/main
 
-doc:
-	doxygen Doxyfile
+$(DIRS):
+	mkdir $@
 
 clean:
-	rm -f *.o bin/* *.d
+	rm -rf $(DIR_BIN)

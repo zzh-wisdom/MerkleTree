@@ -2,7 +2,7 @@
 #define MERKLE_TREE_CONTENTS_H_
 
 #include<iostream>
-#include"../src/merkletree.h"
+#include"../src/merkle_tree.h"
 #include"../util/hash.h"
 using namespace std;
 
