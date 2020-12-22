@@ -64,9 +64,9 @@ string CalculateRootHash(vector<Content*>& v, HashFun hash_fun) {
     case 3:{
         string tmp;
 
-        string hash0_0 = v[0]->CalculateHash();
-        string hash0_1 = v[1]->CalculateHash();
-        string hash0_2 = v[2]->CalculateHash();
+        string hash0_0 = v[0]->CalculateHash(true);
+        string hash0_1 = v[1]->CalculateHash(true);
+        string hash0_2 = v[2]->CalculateHash(true);
 
         tmp = hash0_0 + hash0_1;
         string hash1_0 = hash_fun(tmp);
@@ -92,10 +92,10 @@ string CalculateRootHash(vector<Content*>& v, HashFun hash_fun) {
     case 4:{
         string tmp;
 
-        string hash0_0 = v[0]->CalculateHash();
-        string hash0_1 = v[1]->CalculateHash();
-        string hash0_2 = v[2]->CalculateHash();
-        string hash0_3 = v[3]->CalculateHash();
+        string hash0_0 = v[0]->CalculateHash(true);
+        string hash0_1 = v[1]->CalculateHash(true);
+        string hash0_2 = v[2]->CalculateHash(true);
+        string hash0_3 = v[3]->CalculateHash(true);
         
         tmp = hash0_0 + hash0_1;
         string hash1_0 = hash_fun(tmp);
@@ -110,11 +110,11 @@ string CalculateRootHash(vector<Content*>& v, HashFun hash_fun) {
     case 5:{
         string tmp;
 
-        string hash0_0 = v[0]->CalculateHash();
-        string hash0_1 = v[1]->CalculateHash();
-        string hash0_2 = v[2]->CalculateHash();
-        string hash0_3 = v[3]->CalculateHash();
-        string hash0_4 = v[4]->CalculateHash();
+        string hash0_0 = v[0]->CalculateHash(true);
+        string hash0_1 = v[1]->CalculateHash(true);
+        string hash0_2 = v[2]->CalculateHash(true);
+        string hash0_3 = v[3]->CalculateHash(true);
+        string hash0_4 = v[4]->CalculateHash(true);
 
         tmp = hash0_0 + hash0_1;
         string hash1_0 = hash_fun(tmp);

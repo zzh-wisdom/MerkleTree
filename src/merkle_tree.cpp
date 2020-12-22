@@ -15,14 +15,14 @@ void Node::buildBF() {
     double p = tree_->p_;
     bf_ = new BloomFilter(n, p);
     for(int i=left_idx_; i<=right_idx_; i++) {
-        bf_->AddKey(tree_->leafs_[i]->content_->CalculateHash());
+        bf_->AddKey(tree_->leafs_[i]->content_->CalculateHash(false));
     }
 }
 
 string Node::VerifyNode(vector<Content*>* damaged_contents) {
     string tmp_hash;
     if(this->is_leaf_) {
-        tmp_hash = this->content_->CalculateHash();
+        tmp_hash = this->content_->CalculateHash(false);
         if (tmp_hash != this->hash_ && !is_dup_) {
             if(damaged_contents != nullptr) {
                 (*damaged_contents).push_back(this->content_);
@@ -48,7 +48,7 @@ string Node::VerifyNode(vector<Content*>* damaged_contents) {
 
 string Node::CalculateNodeHash() {
     if(this->is_leaf_) {
-        return this->content_->CalculateHash();
+        return this->content_->CalculateHash(false);
     }
 
     string combo_hash = this->left_->hash_ + this->right_->hash_;
@@ -61,14 +61,14 @@ Node* Node::FindLeafMayUsingBF(Content *content, int min_depth_for_bf) {
     }
     if(depth_<min_depth_for_bf) {  // 小于，直接循环查找
         for(int i=left_idx_; i<=right_idx_; i++) {
-            if(tree_->leafs_[i]->content_->EqualsByHashAndNum(content)) {
+            if(tree_->leafs_[i]->content_->EqualsByHashAndNum(content, true)) {
                 return tree_->leafs_[i];
             }
         }
         return nullptr;
     }
     else { // 使用bloom filter
-        if(!bf_->KeyMayMatch(content->CalculateHash())) { // 不存在
+        if(!bf_->KeyMayMatch(content->CalculateHash(true))) { // 不存在
             return nullptr;
         }
         else {  // 可能存在

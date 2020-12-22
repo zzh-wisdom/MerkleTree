@@ -19,10 +19,10 @@ public:
     /**
      * @brief 计算数据块的hash值
      * 
-     * @param hash 
+     * @param is_cache 是否取已经计算好的Hash
      * @return string 
      */
-    virtual string CalculateHash() = 0;
+    virtual string CalculateHash(bool is_cache) = 0;
 
     /**
      * @brief 判断this与other的数据内容是否相等
@@ -37,19 +37,21 @@ public:
      * @brief 判断this与other的hash值是否相等
      * 
      * @param other 
+     * @param is_cache 是否取已经计算好的Hash
      * @return true 
      * @return false 
      */
-    virtual bool EqualsByHash(Content* other) = 0;
+    virtual bool EqualsByHash(Content* other, bool is_cache) = 0;
 
     /**
      * @brief 同时根据hash和num来判断是否相等
      * 
      * @param other 
+     * @param is_cache 是否取已经计算好的Hash
      * @return true 
      * @return false 
      */
-    virtual bool EqualsByHashAndNum(Content* other) = 0;
+    virtual bool EqualsByHashAndNum(Content* other, bool is_cache) = 0;
 
     /**
      * @brief 获取该数据块的编号（只是为了方便测试）
@@ -91,7 +93,7 @@ struct Node {
         left_idx_(content_idx),
         right_idx_(content_idx),
         bf_(nullptr) {
-            hash_ = content_->CalculateHash();
+            hash_ = content_->CalculateHash(false);
     }
 
     /// 中间节点
@@ -195,7 +197,7 @@ struct MerkleTree {
     /// damaged_contents 带回损坏的内容
     bool TreeProof(vector<Content*>* damaged_contents);
 
-    /// 指定内容验证
+    /// 数据块验证
     bool ContentProof(Content *content, int min_depth_for_bf);
 
     string GetRootHash();

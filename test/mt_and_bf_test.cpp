@@ -39,6 +39,7 @@ vector<Content*> BuildSHA256ContentsWithMissRate(vector<Content*> contents, doub
     for(; i<total; i++) {
         tmp = static_cast<SHA256Content*>(v[i]);
         tmp->data_[0] += 1;
+        tmp->hash_ = tmp->CalculateHash(false);
     }
     return v;
 }
@@ -95,7 +96,7 @@ bool TestContentProofWithBF(MerkleTree *tree, vector<Content*> contents, double 
         assert(!tree->ContentProof(contents[i] , min_depth_for_bf));
     }
     uint64_t end = get_now_micros();
-    printf(", time:%0.2fms depth:%d\n", (double)(end-begin)/1000.0, min_depth_for_bf);
+    printf(", \ttime:%0.2f\tms depth:%d\n", (double)(end-begin)/1000.0, min_depth_for_bf);
     return true;
 }
 
@@ -137,32 +138,32 @@ int main() {
         }
     }
 
-    // for(int i = 0; i < rates_num; i++) {
-    //     vector<Content*>& tmp_v = vv[i];
-    //     double tmp_miss_rate = miss_rates[i];
-    //     printf("----------------------\n");
-    //     total_test_num += 2;
-    //     if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, tree.GetRootDepth())){
-    //         success_num ++;
-    //     }
-    //     if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, 2)) {
-    //         success_num ++;
-    //     }
-    // }
+    for(int i = 0; i < rates_num; i++) {
+        vector<Content*>& tmp_v = vv[i];
+        double tmp_miss_rate = miss_rates[i];
+        printf("----------------------\n");
+        total_test_num += 2;
+        if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, tree.GetRootDepth())){
+            success_num ++;
+        }
+        if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, 2)) {
+            success_num ++;
+        }
+    }
 
     // 不同深度
-    // int max_depth = 13;
-    // for(int i = 0; i < rates_num; i++) {
-    //     vector<Content*>& tmp_v = vv[i];
-    //     double tmp_miss_rate = miss_rates[i];
-    //     printf("----------------------\n");
-    //     for(int j=2; j<=max_depth; j++) {
-    //         total_test_num ++;
-    //         if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, j)){
-    //             success_num ++;
-    //         }
-    //     }
-    // }
+    int max_depth = 13;
+    for(int i = 0; i < rates_num; i++) {
+        vector<Content*>& tmp_v = vv[i];
+        double tmp_miss_rate = miss_rates[i];
+        printf("----------------------\n");
+        for(int j=2; j<=max_depth; j++) {
+            total_test_num ++;
+            if(TestContentProofWithBF(&tree, tmp_v, tmp_miss_rate, j)){
+                success_num ++;
+            }
+        }
+    }
 
     printf("----------------------\n");
     printf("total  : %d\n", total_test_num);
